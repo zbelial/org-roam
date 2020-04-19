@@ -246,11 +246,11 @@ it as FILE-PATH."
                                  (or (org-element-property :content-end element)
                                      (org-element-property :end element)))))
                    (content (string-trim content)))
-              (vector file-path
-                      (cond ((string= link-type "roam")
-                             (file-truename (expand-file-name path (file-name-directory file-path))))
-                            ((string= link-type "cite")
-                             path))
+              (vector (org-roam-db--file-name file-path)
+                      (org-roam-db--file-name (cond ((string= link-type "roam")
+                                                     (file-truename (expand-file-name path (file-name-directory file-path))))
+                                                    ((string= link-type "cite")
+                                                     path)))
                       link-type
                       (list :content content :point begin)))))))))
 
