@@ -5,7 +5,7 @@
 ;; Author: Jethro Kuan <jethrokuan95@gmail.com>
 ;; URL: https://github.com/jethrokuan/org-roam
 ;; Keywords: org-mode, roam, convenience
-;; Version: 1.0.0-rc1
+;; Version: 1.1.0
 ;; Package-Requires: ((emacs "26.1") (dash "2.13") (f "0.17.2") (s "1.12.0") (org "9.3") (emacsql "3.0.0") (emacsql-sqlite "1.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
@@ -167,29 +167,19 @@ If FILE is not specified, use the current buffer's file-path."
   (if-let ((path (or file
                   (buffer-file-name))))
       (save-match-data
-	(org-roam--org-file-p path)
-	(f-descendant-of-p (file-truename path)
-			   (file-truename org-roam-directory)))))
+        (and
+         (org-roam--org-file-p path)
+         (f-descendant-of-p (file-truename path)
+                            (file-truename org-roam-directory))))))
 
 (defun org-roam--list-files (dir)
   "Return all Org-roam files located within DIR, at any nesting level.
 Ignores hidden files and directories."
-  (if (file-exists-p dir)
-      (let ((files (directory-files dir t "." t))
-            (dir-ignore-regexp (concat "\\(?:"
-                                       "\\."
-                                       "\\|\\.\\."
-                                       "\\)$"))
-            result)
-        (dolist (file files)
-          (cond
-           ((file-directory-p file)
-            (unless (string-match dir-ignore-regexp file)
-              (setq result (append (org-roam--list-files file) result))))
-           ((and (file-readable-p file)
-                 (org-roam--org-file-p file))
-            (setq result (cons (file-truename file) result)))))
-        result)))
+  (let ((regex (concat "\\.\\(?:"(mapconcat #'regexp-quote org-roam-file-extensions "\\|" )"\\)\\(?:\\.gpg\\)?\\'"))
+        result)
+    (dolist (file (directory-files-recursively dir regex) result)
+      (when (and (file-readable-p file) (org-roam--org-file-p file))
+        (push file result)))))
 
 (defun org-roam--list-all-files ()
   "Return a list of all Org-roam files within `org-roam-directory'."

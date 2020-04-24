@@ -5,7 +5,7 @@
 ;; Author: Jethro Kuan <jethrokuan95@gmail.com>
 ;; URL: https://github.com/jethrokuan/org-roam
 ;; Keywords: org-mode, roam, convenience
-;; Version: 1.0.0-rc1
+;; Version: 1.1.0
 ;; Package-Requires: ((emacs "26.1") (dash "2.13") (f "0.17.2") (s "1.12.0") (org "9.3") (emacsql "3.0.0") (emacsql-sqlite "1.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
@@ -148,14 +148,6 @@ Next, it expands the remaining template string using
                   (or (s--aget info key)
                       (completing-read (format "%s: " key ) nil))) nil)
       (org-capture-fill-template)))
-
-(defun org-roam-capture--find-file-h ()
-  "Opens the newly created template file.
-This is added as a hook to `org-capture-after-finalize-hook'."
-  (when-let ((file-path (org-roam-capture--get :file-path)))
-    (unless org-note-abort
-      (find-file file-path)))
-  (remove-hook 'org-capture-after-finalize-hook #'org-roam-capture--find-file-h))
 
 (defun org-roam-capture--insert-link-h ()
   "Insert the link into the original buffer, after the capture process is done.
@@ -302,6 +294,22 @@ This function is used solely in Org-roam's capture templates: see
         (push key converted)
         (push val converted)))
     (append (nreverse converted) `(:org-roam ,org-roam-plist))))
+
+(defun org-roam-capture--find-file-h ()
+  "Opens the newly created template file.
+This is added as a hook to `org-capture-after-finalize-hook'.
+Run the hooks defined in `org-roam-capture-after-find-file-hook'."
+  (unless org-note-abort
+    (when-let ((file-path (org-roam-capture--get :file-path)))
+      (find-file file-path))
+    (run-hooks 'org-roam-capture-after-find-file-hook))
+  (remove-hook 'org-capture-after-finalize-hook #'org-roam-capture--find-file-h))
+
+(defcustom org-roam-capture-after-find-file-hook nil
+  "Hook that is run right after an Org-roam capture process is finalized.
+Suitable for moving point."
+  :group 'org-roam
+  :type 'hook)
 
 (defun org-roam--capture (&optional goto keys)
   "Create a new file, and return the path to the edited file.
