@@ -44,6 +44,8 @@
 (declare-function org-roam--extract-links       "org-roam")
 (declare-function org-roam--list-files          "org-roam")
 (declare-function org-roam-buffer--update-maybe "org-roam-buffer")
+(declare-function org-roam-file--replace-label  "org-roam-file")
+(declare-function org-roam-file--replaced-with-label  "org-roam-file")
 
 ;;;; Options
 (defcustom org-roam-db-location nil
@@ -54,12 +56,6 @@ It is the user's responsibility to set this correctly, especially
 when used with multiple Org-roam instances."
   :type 'string
   :group 'org-roam)
-
-(defcustom org-roam-absolute-path t
-  "Use absolute path when saving to sqlite db."
-  :type 'boolean
-  :group 'org-roam)
-
 
 (defconst org-roam-db--version 2)
 (defconst org-roam-db--sqlite-available-p
@@ -76,20 +72,6 @@ when used with multiple Org-roam instances."
   (interactive "P")
   (or org-roam-db-location
       (expand-file-name "org-roam.db" org-roam-directory)))
-
-(defun org-roam-db--file-name (file)
-  "Return absolute or relative file name to save in db according to `org-roam-absolute-path'"
-  (if (not org-roam-absolute-path)
-      (file-relative-name file org-roam-directory)
-    file)
-  )
-
-(defun org-roam-db--retrieved-file-name (file)
-  "Return absolute file name"
-  (if (not (file-name-absolute-p file))
-      (expand-file-name file org-roam-directory)
-    file)
-  )
 
 (defun org-roam-db--get-connection ()
   "Return the database connection, if any."
@@ -216,7 +198,7 @@ the current `org-roam-directory'."
 This is equivalent to removing the node from the graph."
   (let* ((path (or filepath
                    (buffer-file-name)))
-         (file (org-roam-db--file-name (file-truename path))))
+         (file (org-roam-file--replaced-with-label (file-truename path))))
     (org-roam-db-query [:delete :from files
                         :where (= file $s1)]
                        file)
@@ -258,14 +240,14 @@ This is equivalent to removing the node from the graph."
   (let* ((current-files (org-roam-db-query [:select * :from files]))
          (ht (make-hash-table :test #'equal)))
     (dolist (row current-files)
-      (puthash (org-roam-db--retrieved-file-name (car row)) (cadr row) ht))
+      (puthash (org-roam-file--replace-label (car row)) (cadr row) ht))
     ht))
 
 (defun org-roam-db--get-titles (file)
   "Return the titles of FILE from the cache."
   (caar (org-roam-db-query [:select [titles] :from titles
                             :where (= file $s1)]
-                           (org-roam-db--file-name file)
+                           (org-roam-file--replaced-with-label file)
                            :limit 1)))
 
 (defun org-roam-db--connected-component (file)
@@ -286,7 +268,7 @@ If the file does not have any connections, nil is returned."
                       UNION
                       SELECT link FROM links_of JOIN connected_component USING(file))
                    SELECT * FROM connected_component;")
-         (files (mapcar 'car-safe (emacsql (org-roam-db) query (org-roam-db--file-name file)))))
+         (files (mapcar 'car-safe (emacsql (org-roam-db) query (org-roam-file--replaced-with-label file)))))
     files))
 
 (defun org-roam-db--links-with-max-distance (file max-distance)
@@ -318,13 +300,13 @@ including the file itself.  If the file does not have any connections, nil is re
                    SELECT DISTINCT file, min(json_array_length(trace)) AS distance
                    FROM connected_component GROUP BY file ORDER BY distance;")
          ;; In principle the distance would be available in the second column.
-         (files (mapcar 'car-safe (emacsql (org-roam-db) query (org-roam-db--file-name file) max-distance))))
+         (files (mapcar 'car-safe (emacsql (org-roam-db) query (org-roam-file--replaced-with-label file) max-distance))))
     files))
 
 ;;;;; Updating
 (defun org-roam-db--update-titles ()
   "Update the title of the current buffer into the cache."
-  (let ((file (org-roam-db--file-name (file-truename (buffer-file-name)))))
+  (let ((file (org-roam-file--replaced-with-label (file-truename (buffer-file-name)))))
     (org-roam-db-query [:delete :from titles
                         :where (= file $s1)]
                        file)
@@ -332,7 +314,7 @@ including the file itself.  If the file does not have any connections, nil is re
 
 (defun org-roam-db--update-refs ()
   "Update the ref of the current buffer into the cache."
-  (let ((file (org-roam-db--file-name (file-truename (buffer-file-name)))))
+  (let ((file (org-roam-file--replaced-with-label (file-truename (buffer-file-name)))))
     (org-roam-db-query [:delete :from refs
                         :where (= file $s1)]
                        file)
@@ -341,7 +323,7 @@ including the file itself.  If the file does not have any connections, nil is re
 
 (defun org-roam-db--update-cache-links ()
   "Update the file links of the current buffer in the cache."
-  (let ((file (org-roam-db--file-name (file-truename (buffer-file-name)))))
+  (let ((file (org-roam-file--replaced-with-label (file-truename (buffer-file-name)))))
     (org-roam-db-query [:delete :from links
                         :where (= from $s1)]
                        file)
@@ -372,7 +354,7 @@ including the file itself.  If the file does not have any connections, nil is re
          (time (current-time))
          all-files all-links all-titles all-refs db-file-name)
     (dolist (file org-roam-files)
-      (setq db-file-name (org-roam-db--file-name file))
+      (setq db-file-name (org-roam-file--replaced-with-label file))
       (org-roam--with-temp-buffer
         (insert-file-contents file)
         (let ((contents-hash (secure-hash 'sha1 (current-buffer))))
@@ -436,7 +418,7 @@ including the file itself.  If the file does not have any connections, nil is re
          all-files all-links all-titles all-refs db-file-name)
     (org-roam-db--clear)
     (dolist (file org-roam-files)
-      (setq db-file-name (org-roam-db--file-name file))
+      (setq db-file-name (org-roam-file--replaced-with-label file))
       (org-roam--with-temp-buffer
         (insert-file-contents file)
         (let ((contents-hash (secure-hash 'sha1 (current-buffer))))

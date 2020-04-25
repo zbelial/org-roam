@@ -51,6 +51,7 @@
 (require 'org-roam-graph)
 (require 'org-roam-completion)
 (require 'org-roam-dailies)
+(require 'org-roam-file)
 
 ;; To detect cite: links
 (require 'org-ref nil t)
@@ -236,11 +237,11 @@ it as FILE-PATH."
                                  (or (org-element-property :content-end element)
                                      (org-element-property :end element)))))
                    (content (string-trim content)))
-              (vector (org-roam-db--file-name file-path)
-                      (org-roam-db--file-name (cond ((string= link-type "roam")
-                                                     (file-truename (expand-file-name path (file-name-directory file-path))))
-                                                    ((string= link-type "cite")
-                                                     path)))
+              (vector (org-roam-file--replaced-with-label file-path)
+                      (org-roam-file--replaced-with-label (cond ((string= link-type "roam")
+                                                                 (file-truename (expand-file-name path (file-name-directory file-path))))
+                                                                ((string= link-type "cite")
+                                                                 path)))
                       link-type
                       (list :content content :point begin)))))))))
 
