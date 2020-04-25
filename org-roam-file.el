@@ -43,7 +43,7 @@
   :type 'string
   :group 'org-roam)
 
-(defun org-roam-file--replaced-with-label (file)
+(defun org-roam-file--to-db (file)
   "Replace prefix of full file name with `org-roam-file-directory-label'"
   (if (f-ancestor-of? org-roam-directory file)
       (concat org-roam-file-directory-label ":" (s-chop-prefix (f-slash org-roam-directory) file))
@@ -51,12 +51,27 @@
     )
   )
 
-(defun org-roam-file--replace-label (file)
+(defun org-roam-file--from-db (file)
   "Return full file name"
   (if (s-prefix? (concat org-roam-file-directory-label ":") file)
       (expand-file-name (s-chop-prefix (concat org-roam-file-directory-label ":") file) org-roam-directory)
-    (error (format "FILE %S does not in %S", file, org-roam-directory)))
+    (error (format "FILE %S does not in %S" file org-roam-directory)))
   )
+
+(defun org-roam-file--link-from-db (link)
+  (vector (org-roam-file--from-db (aref link 0))
+          (org-roam-file--from-db (aref link 1))
+          (aref link 2)
+          (aref link 3))
+  )
+
+(defun org-roam-file--link-to-db (link)
+  (vector (org-roam-file--to-db (aref link 0))
+          (org-roam-file--to-db (aref link 1))
+          (aref link 2)
+          (aref link 3))
+  )
+
 
 (provide 'org-roam-file)
 

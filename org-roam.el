@@ -237,11 +237,11 @@ it as FILE-PATH."
                                  (or (org-element-property :content-end element)
                                      (org-element-property :end element)))))
                    (content (string-trim content)))
-              (vector (org-roam-file--replaced-with-label file-path)
-                      (org-roam-file--replaced-with-label (cond ((string= link-type "roam")
-                                                                 (file-truename (expand-file-name path (file-name-directory file-path))))
-                                                                ((string= link-type "cite")
-                                                                 path)))
+              (vector file-path
+                      (cond ((string= link-type "roam")
+                             (file-truename (expand-file-name path (file-name-directory file-path))))
+                            ((string= link-type "cite")
+                             path))
                       link-type
                       (list :content content :point begin)))))))))
 
@@ -357,7 +357,7 @@ which takes as its argument an alist of path-completions.  See
   (let* ((rows (org-roam-db-query [:select [file titles] :from titles]))
          res)
     (dolist (row rows)
-      (let ((file-path (car row))
+      (let ((file-path (org-roam-file--from-db (car row)))
             (titles (cadr row)))
         (if titles
             (dolist (title titles)
@@ -402,7 +402,7 @@ which takes as its argument an alist of path-completions.  See
   (let ((rows (org-roam-db-query [:select [ref file] :from refs])))
     (mapcar (lambda (row)
               (cons (car row)
-                    (cadr row))) rows)))
+                    (org-roam-file--from-db (cadr row)))) rows)))
 
 (defun org-roam-find-ref (&optional info)
   "Find and open an Org-roam file from a ref.
@@ -526,10 +526,11 @@ This function hooks into `org-open-at-point' via `org-open-at-point-functions'."
   "Return the backlinks for TARGET.
 TARGET may be a file, for Org-roam file links, or a citation key,
 for Org-ref cite links."
-  (org-roam-db-query [:select [from, to, properties] :from links
-                      :where (= to $s1)
-                      :order-by (asc from)]
-                     target))
+  (mapcar #'(lambda (r) (list (org-roam-file--from-db (nth 0 r)) (org-roam-file--from-db (nth 1 r)) (nth 2 r)))
+          (org-roam-db-query [:select [from, to, properties] :from links
+                                      :where (= to $s1)
+                                      :order-by (asc from)]
+                             (org-roam-file--to-db target))))
 
 (defun org-roam-store-link ()
   "Store a link to an `org-roam' file."
@@ -609,12 +610,13 @@ Otherwise, behave as if called interactively."
              (not (auto-save-file-name-p new-file))
              (org-roam--org-roam-file-p new-file))
     (org-roam-db--ensure-built)
-    (let* ((files-to-rename (org-roam-db-query [:select :distinct [from]
-                                                :from links
-                                                :where (= to $s1)
-                                                :and (= type $s2)]
-                                               file
-                                               "roam"))
+    (let* ((files-to-rename (mapcar #'org-roam-file--from-db r
+                                    (org-roam-db-query [:select :distinct [from]
+                                                                :from links
+                                                                :where (= to $s1)
+                                                                :and (= type $s2)]
+                                                       (org-roam-file--to-db file)
+                                                       "roam")))
            (path (file-truename file))
            (new-path (file-truename new-file))
            (slug (org-roam--get-title-or-slug file))
