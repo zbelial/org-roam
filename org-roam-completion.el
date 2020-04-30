@@ -82,9 +82,7 @@ Return user choice."
                           :require-match require-match
                           :action (prog1 action
                                     (setq action nil))
-                          :caller 'org-roam--completing-read
-                          :re-builder (if org-roam-completion-fuzzy-match 'ivy--regex-fuzzy
-                                        'regexp-quote))
+                          :caller 'org-roam--completing-read)
               (user-error "Please install ivy from \
 https://github.com/abo-abo/swiper")))
            ((eq org-roam-completion-system 'helm)
