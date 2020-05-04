@@ -55,7 +55,7 @@
   "Return full file name"
   (if (s-prefix? (concat org-roam-file-directory-label ":") file)
       (expand-file-name (s-chop-prefix (concat org-roam-file-directory-label ":") file) org-roam-directory)
-    (error (format "FILE %S does not in %S" file org-roam-directory)))
+    (error (format "FILE %S is not in %S" file org-roam-directory)))
   )
 
 (defun org-roam-file--link-from-db (link)
