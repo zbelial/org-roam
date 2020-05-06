@@ -47,7 +47,7 @@
   "Replace prefix of full file name with `org-roam-file-directory-label'"
   (if (f-ancestor-of? org-roam-directory file)
       (concat org-roam-file-directory-label ":" (s-chop-prefix (f-slash org-roam-directory) file))
-    (error (format "FILE %S is not in %S" file org-roam-directory))
+    (error (format "org-roam-file--to-db: FILE %S is not in %S" file org-roam-directory))
     )
   )
 
@@ -55,7 +55,7 @@
   "Return full file name"
   (if (s-prefix? (concat org-roam-file-directory-label ":") file)
       (expand-file-name (s-chop-prefix (concat org-roam-file-directory-label ":") file) org-roam-directory)
-    (error (format "FILE %S is not in %S" file org-roam-directory)))
+    (error (format "org-roam-file--from-db: FILE %S is not in %S" file org-roam-directory)))
   )
 
 (defun org-roam-file--link-from-db (link)
