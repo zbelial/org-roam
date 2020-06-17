@@ -1067,14 +1067,15 @@ See `org-roam-store-link' for details on ARG and INTERACTIVE?."
 When MARKERP is non-nil, return a marker pointing to theheadline.
 Otherwise, return a cons formatted as \(file . pos).
 When STRICT is non-nil, only consider Org-roam’s database."
-  (let ((file (or (caar (org-roam-db-query [:select [file]
-                                            :from headlines
-                                            :where (= id $s1)]
-                                           id))
+  (let ((file (or (org-roam-file--from-db
+                   (caar (org-roam-db-query [:select [file]
+                                             :from headlines
+                                             :where (= id $s1)]
+                                            id)))
                   (unless strict
                     (org-id-find-id-file id)))))
     (when file
-      (org-id-find-id-in-file id (org-roam-file--from-db file) markerp))))
+      (org-id-find-id-in-file id file markerp))))
 
 (defun org-roam-id-open (id-or-marker &optional strict)
   "Go to the entry with ID-OR-MARKER.
