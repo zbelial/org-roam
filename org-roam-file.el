@@ -72,6 +72,10 @@
           (aref link 3))
   )
 
+(defun org-roam-file--headline-to-db (headline)
+  (vector (aref headline 0)
+          (org-roam-file--to-db (aref headline 1)))
+  )
 
 (provide 'org-roam-file)
 

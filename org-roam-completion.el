@@ -1,12 +1,12 @@
-;;; org-roam-completion.el --- Roam Research replica with Org-mode -*- coding: utf-8; lexical-binding: t -*-
+;;; org-roam-completion.el --- Completion features -*- coding: utf-8; lexical-binding: t; -*-
 
 ;; Copyright © 2020 Jethro Kuan <jethrokuan95@gmail.com>
 
 ;; Author: Jethro Kuan <jethrokuan95@gmail.com>
-;; URL: https://github.com/jethrokuan/org-roam
+;; URL: https://github.com/org-roam/org-roam
 ;; Keywords: org-mode, roam, convenience
-;; Version: 1.1.0
-;; Package-Requires: ((emacs "26.1") (dash "2.13") (f "0.17.2") (s "1.12.0") (org "9.3") (emacsql "3.0.0") (emacsql-sqlite "1.0.0"))
+;; Version: 1.2.0
+;; Package-Requires: ((emacs "26.1") (dash "2.13") (f "0.17.2") (s "1.12.0") (org "9.3") (emacsql "3.0.0") (emacsql-sqlite3 "1.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -45,11 +45,6 @@
           (const :tag "Ivy" ivy)
           (const :tag "Helm" helm)
           (function :tag "Custom function"))
-  :group 'org-roam)
-
-(defcustom org-roam-completion-fuzzy-match nil
-  "Whether to fuzzy match Org-roam's completion candidates."
-  :type 'boolean
   :group 'org-roam)
 
 (defun org-roam-completion--helm-candidate-transformer (candidates _source)
@@ -94,8 +89,7 @@ https://github.com/emacs-helm/helm"))
                             :candidates (mapcar #'car choices)
                             :filtered-candidate-transformer
                             (and (not require-match)
-                                 #'org-roam-completion--helm-candidate-transformer)
-                            :fuzzy-match org-roam-completion-fuzzy-match))
+                                 #'org-roam-completion--helm-candidate-transformer)))
                   (buf (concat "*org-roam "
                                (s-downcase (s-chop-suffix ":" (s-trim prompt)))
                                "*")))

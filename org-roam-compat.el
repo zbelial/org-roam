@@ -1,12 +1,12 @@
-;;; org-roam-compat.el --- Compatibility Code -*- coding: utf-8; lexical-binding: t -*-
+;;; org-roam-compat.el --- Compatibility Code -*- coding: utf-8; lexical-binding: t; -*-
 
 ;; Copyright © 2020 Jethro Kuan <jethrokuan95@gmail.com>
 
 ;; Author: Jethro Kuan <jethrokuan95@gmail.com>
-;; URL: https://github.com/jethrokuan/org-roam
+;; URL: https://github.com/org-roam/org-roam
 ;; Keywords: org-mode, roam, convenience
-;; Version: 1.1.0
-;; Package-Requires: ((emacs "26.1") (dash "2.13") (f "0.17.2") (s "1.12.0") (org "9.3") (emacsql "3.0.0") (emacsql-sqlite "1.0.0"))
+;; Version: 1.2.0
+;; Package-Requires: ((emacs "26.1") (dash "2.13") (f "0.17.2") (s "1.12.0") (org "9.3") (emacsql "3.0.0") (emacsql-sqlite3 "1.0.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -71,17 +71,25 @@
   "org-roam 1.0.0")
 (define-obsolete-function-alias 'org-roam-graph-build 'org-roam-graph
   "org-roam 1.0.0")
+(define-obsolete-function-alias 'org-roam-find-index 'org-roam-jump-to-index
+  "org-roam 1.1.0")
+(define-obsolete-function-alias 'org-roam--pluralize 'org-roam-buffer--pluralize
+  "org-roam 1.1.0")
+(define-obsolete-function-alias 'org-roam--capture 'org-roam-capture--capture
+  "org-roam 1.1.0")
+(define-obsolete-function-alias 'org-roam-db--maybe-update 'org-roam-db--update-maybe
+  "org-roam 1.1.0")
+
+(when (version< (org-version) "9.3")
+  (defalias 'org-link-make-string 'org-make-link-string))
 
 ;;;; Variables
 (define-obsolete-variable-alias 'org-roam-graphviz-extra-options
   'org-roam-graph-extra-config "org-roam 1.0.0")
 (define-obsolete-variable-alias 'org-roam-grapher-extra-options
   'org-roam-graph-extra-config "org-roam 1.0.0")
-(make-obsolete-variable 'org-roam-graph-node-shape  'org-roam-graph-node-extra-config "org-roam 1.0.0")
-(defcustom org-roam-graph-node-shape "ellipse"
-  "Shape of graph nodes."
-  :type 'string
-  :group 'org-roam)
+(define-obsolete-variable-alias 'org-roam-graph-node-shape
+  'org-roam-graph-node-extra-config "org-roam 1.0.0")
 (define-obsolete-variable-alias 'org-roam--db-connection
   'org-roam-db--connection "org-roam 1.0.0")
 (define-obsolete-variable-alias 'org-roam--current-buffer
@@ -90,6 +98,8 @@
   'org-roam-dailies-capture-templates "org-roam 1.0.0")
 (define-obsolete-variable-alias 'org-roam-date-filename-format
   'org-roam-dailies-capture-templates "org-roam 1.0.0")
+(make-obsolete-variable 'org-roam-buffer-no-delete-other-windows
+  'org-roam-buffer-window-parameters "org-roam 1.1.1")
 
 (provide 'org-roam-compat)
 

@@ -54,3 +54,17 @@ endif
 .DEFAULT: init
 init:
 	@./makem.sh $(DEBUG) $(VERBOSE) $(SANDBOX) $(INSTALL_DEPS) $(INSTALL_LINTERS)
+
+docs:
+	@$(MAKE) -C doc all
+
+html:
+	@$(MAKE) -C doc html-dir
+
+install: install-docs
+
+install-docs: docs
+	@$(MAKE) -C doc install-docs
+
+install-info: info
+	@$(MAKE) -C doc install-info
